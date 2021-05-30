@@ -80,12 +80,16 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	appparams "github.com/schrsi/d-email/app/params"
-	"github.com/schrsi/d-email/x/demail"
-	demailkeeper "github.com/schrsi/d-email/x/demail/keeper"
-	demailtypes "github.com/schrsi/d-email/x/demail/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
 	// this line is used by starport scaffolding # stargate/app/moduleImport
+	"github.com/schrsi/d-email/x/address"
+	addresskeeper "github.com/schrsi/d-email/x/address/keeper"
+	addresstypes "github.com/schrsi/d-email/x/address/types"
+	"github.com/schrsi/d-email/x/email"
+	emailkeeper "github.com/schrsi/d-email/x/email/keeper"
+	emailtypes "github.com/schrsi/d-email/x/email/types"
 )
 
 const Name = "demail"
@@ -131,8 +135,8 @@ var (
 		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
-		demail.AppModuleBasic{},
-		// this line is used by starport scaffolding # stargate/app/moduleBasic
+		email.AppModuleBasic{},
+		address.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -198,8 +202,9 @@ type App struct {
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
 
-	demailKeeper demailkeeper.Keeper
-	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
+	emailKeeper emailkeeper.Keeper
+
+	addressKeeper addresskeeper.Keeper
 
 	// the module manager
 	mm *module.Manager
@@ -228,8 +233,8 @@ func New(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
-		demailtypes.StoreKey,
-		// this line is used by starport scaffolding # stargate/app/storeKey
+		emailtypes.StoreKey,
+		addresstypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -319,11 +324,20 @@ func New(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
 
-	app.demailKeeper = *demailkeeper.NewKeeper(
-		appCodec, keys[demailtypes.StoreKey], keys[demailtypes.MemStoreKey],
+	app.emailKeeper = *emailkeeper.NewKeeper(
+		appCodec,
+		keys[emailtypes.StoreKey],
+		keys[emailtypes.MemStoreKey],
 	)
+	emailModule := email.NewAppModule(appCodec, app.emailKeeper)
 
-	// this line is used by starport scaffolding # stargate/app/keeperDefinition
+	app.addressKeeper = *addresskeeper.NewKeeper(
+		appCodec,
+		keys[addresstypes.StoreKey],
+		keys[addresstypes.MemStoreKey],
+		app.BankKeeper,
+	)
+	addressModule := address.NewAppModule(appCodec, app.addressKeeper)
 
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
@@ -365,8 +379,8 @@ func New(
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
-		demail.NewAppModule(appCodec, app.demailKeeper),
-		// this line is used by starport scaffolding # stargate/app/appModule
+		emailModule,
+		addressModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -399,8 +413,8 @@ func New(
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		demailtypes.ModuleName,
-		// this line is used by starport scaffolding # stargate/app/initGenesis
+		emailtypes.ModuleName,
+		addresstypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -583,6 +597,8 @@ func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyA
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
+	paramsKeeper.Subspace(emailtypes.ModuleName)
+	paramsKeeper.Subspace(addresstypes.ModuleName)
 
 	return paramsKeeper
 }
