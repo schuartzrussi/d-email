@@ -9,4 +9,5 @@ import (
 // x/email module sentinel errors
 var (
 	ErrRequiredEmailParam = sdkerrors.Register(ModuleName, 1100, "required email param")
+	ErrInvalidEmailId     = sdkerrors.Register(ModuleName, 1101, "invalid email id")
 )

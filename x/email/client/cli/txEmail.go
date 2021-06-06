@@ -14,7 +14,7 @@ import (
 
 func CmdCreateEmail() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-email [from] [to] [senderSignature] [senderAddressVersion] [subject] [body] [attachments] [replyTo] [trackIds] [sendedAt] [decryptionKeys] [previousDecryptionKey]",
+		Use:   "create-email [from] [to] [senderSignature] [senderAddressVersion] [subject] [body] [replyTo] [trackIds] [sendedAt] [decryptionKeys] [previousDecryptionKey] [id]",
 		Short: "Creates a new email",
 		Args:  cobra.ExactArgs(12),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -29,19 +29,19 @@ func CmdCreateEmail() *cobra.Command {
 
 			argsSubject := args[4]
 			argsBody := args[5]
-			argsAttachments := strings.Split(args[6], ";")
-			argsReplyTo := args[7]
-			argsTrackIds := strings.Split(args[8], ";")
-			argsSendedAt := args[9]
-			argsDecryptionKeys := strings.Split(args[10], ";")
-			argsPreviousDecryptionKey := args[11]
+			argsReplyTo := args[6]
+			argsTrackIds := strings.Split(args[7], ";")
+			argsSendedAt := args[8]
+			argsDecryptionKeys := strings.Split(args[9], ";")
+			argsPreviousDecryptionKey := args[10]
+			argsID := args[11]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			msg := types.NewMsgCreateEmail(clientCtx.GetFromAddress().String(), argsFrom, argsTo, argsSenderSignature, argsSenderAddressVersion, argsSubject, argsBody, argsAttachments, argsReplyTo, argsTrackIds, argsSendedAt, argsDecryptionKeys, argsPreviousDecryptionKey)
+			msg := types.NewMsgCreateEmail(clientCtx.GetFromAddress().String(), argsFrom, argsTo, argsSenderSignature, argsSenderAddressVersion, argsSubject, argsBody, argsReplyTo, argsTrackIds, argsSendedAt, argsDecryptionKeys, argsPreviousDecryptionKey, argsID)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}

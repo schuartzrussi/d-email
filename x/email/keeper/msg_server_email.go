@@ -18,14 +18,18 @@ func (k msgServer) CreateEmail(goCtx context.Context, msg *types.MsgCreateEmail)
 		}
 	}
 
+	if k.HasEmail(ctx, msg.Id) {
+		return nil, sdkerrors.Wrap(types.ErrInvalidEmailId, fmt.Sprintf("invalid id: %s", msg.Id))
+	}
+
 	email := types.Email{
+		Id:                    msg.Id,
 		Creator:               msg.Creator,
 		From:                  msg.From,
 		To:                    msg.To,
 		SenderSignature:       msg.SenderSignature,
 		Subject:               msg.Subject,
 		Body:                  msg.Body,
-		Attachments:           msg.Attachments,
 		ReplyTo:               msg.ReplyTo,
 		TrackIds:              msg.TrackIds,
 		SendedAt:              msg.SendedAt,
@@ -33,8 +37,6 @@ func (k msgServer) CreateEmail(goCtx context.Context, msg *types.MsgCreateEmail)
 		PreviousDecryptionKey: msg.PreviousDecryptionKey,
 		SenderAddressVersion:  msg.SenderAddressVersion,
 	}
-
-	email.Id = k.GenerateID(email)
 
 	k.SetEmail(ctx, email)
 

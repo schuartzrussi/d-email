@@ -1,13 +1,18 @@
 package types
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	fmt "fmt"
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var _ sdk.Msg = &MsgCreateEmail{}
 
-func NewMsgCreateEmail(creator string, from string, to string, senderSignature string, senderAddressVersion uint64, subject string, body string, attachments []string, replyTo string, trackIds []string, sendedAt string, decryptionKeys []string, previousDecryptionKey string) *MsgCreateEmail {
+func NewMsgCreateEmail(creator string, from string, to string, senderSignature string, senderAddressVersion uint64, subject string, body string, replyTo string, trackIds []string, sendedAt string, decryptionKeys []string, previousDecryptionKey string, id string) *MsgCreateEmail {
 	return &MsgCreateEmail{
 		Creator:               creator,
 		From:                  from,
@@ -16,12 +21,12 @@ func NewMsgCreateEmail(creator string, from string, to string, senderSignature s
 		SenderAddressVersion:  senderAddressVersion,
 		Subject:               subject,
 		Body:                  body,
-		Attachments:           attachments,
 		ReplyTo:               replyTo,
 		TrackIds:              trackIds,
 		SendedAt:              sendedAt,
 		DecryptionKeys:        decryptionKeys,
 		PreviousDecryptionKey: previousDecryptionKey,
+		Id:                    id,
 	}
 }
 
@@ -90,6 +95,25 @@ func (msg *MsgCreateEmail) ValidateBasic() error {
 
 	if msg.ReplyTo != "" && msg.PreviousDecryptionKey == "" {
 		return sdkerrors.Wrapf(ErrRequiredEmailParam, "'previousDecryptionKey' field is required")
+	}
+
+	if msg.Id == "" {
+		return sdkerrors.Wrapf(ErrRequiredEmailParam, "'id' field is required")
+	}
+
+	idHashContent := msg.From +
+		msg.To +
+		msg.SendedAt +
+		msg.SenderSignature +
+		msg.Subject +
+		msg.Body +
+		strings.Join(msg.TrackIds, ";") +
+		strings.Join(msg.DecryptionKeys, ";")
+
+	idHasher := sha256.New()
+	idHasher.Write([]byte(idHashContent))
+	if hex.EncodeToString(idHasher.Sum(nil)) != msg.Id {
+		return sdkerrors.Wrap(ErrInvalidEmailId, fmt.Sprintf("invalid id: %s", msg.Id))
 	}
 
 	return nil

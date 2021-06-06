@@ -16,6 +16,7 @@ message MsgCreateAddress {
 }
 
 message MsgCreateAddressResponse {
+  uint64 trackID = 1;  
 }
 
 message MsgUpdateAddress {

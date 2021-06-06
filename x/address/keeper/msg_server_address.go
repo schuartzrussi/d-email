@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -23,11 +24,13 @@ func (k msgServer) CreateAddress(goCtx context.Context, msg *types.MsgCreateAddr
 		return nil, err
 	}
 
+	trackID := k.GenerateTrackID(ctx)
+
 	address := types.Address{
 		Creator: msg.Creator,
 		Name:    msg.Name,
 		PubKey:  msg.PubKey,
-		TrackID: k.GenerateTrackID(ctx),
+		TrackID: trackID,
 		Version: 1,
 	}
 
@@ -37,7 +40,13 @@ func (k msgServer) CreateAddress(goCtx context.Context, msg *types.MsgCreateAddr
 		sdk.NewEvent("address", sdk.NewAttribute("name", msg.Name)),
 	)
 
-	return &types.MsgCreateAddressResponse{}, nil
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent("address", sdk.NewAttribute("trackID", strconv.FormatUint(trackID, 10))),
+	)
+
+	return &types.MsgCreateAddressResponse{
+		TrackID: trackID,
+	}, nil
 }
 
 func (k msgServer) UpdateAddress(goCtx context.Context, msg *types.MsgUpdateAddress) (*types.MsgUpdateAddressResponse, error) {
