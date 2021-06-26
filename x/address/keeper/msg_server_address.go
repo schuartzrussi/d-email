@@ -19,7 +19,7 @@ func (k msgServer) CreateAddress(goCtx context.Context, msg *types.MsgCreateAddr
 		return nil, sdkerrors.Wrap(types.ErrAddressAlreadyExists, fmt.Sprintf("address %s already exists", msg.Name))
 	}
 
-	err := k.sendCoinsToModule(ctx, msg.Creator, "50token")
+	err := k.sendCoinsToModule(ctx, msg.Creator, "1token")
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (k msgServer) UpdateAddress(goCtx context.Context, msg *types.MsgUpdateAddr
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "incorrect owner")
 	}
 
-	err := k.sendCoinsToModule(ctx, msg.Creator, "20token")
+	err := k.sendCoinsToModule(ctx, msg.Creator, "1token")
 	if err != nil {
 		return nil, err
 	}
