@@ -328,6 +328,7 @@ func New(
 		appCodec,
 		keys[emailtypes.StoreKey],
 		keys[emailtypes.MemStoreKey],
+		app.BankKeeper,
 	)
 	emailModule := email.NewAppModule(appCodec, app.emailKeeper)
 
